@@ -17,14 +17,8 @@ import { ref, push, set } from "firebase/database";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { StyledInput } from "@/components/StyledInput";
-import { StyledButton } from "@/components/StyledButton";
 import { Footer } from "@/components/Footer";
 import Colors from "@/constants/colors";
-
-const CITIES = [
-  "Rawalpindi", "Islamabad", "Chakwal", "Lahore", "Karachi",
-  "Peshawar", "Quetta", "Multan", "Faisalabad", "Sialkot",
-];
 
 function getTodayDate() {
   const d = new Date();
@@ -37,17 +31,16 @@ export default function DistributorDashboard() {
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
   const { user, logout } = useAuth();
 
-  const [reportCity, setReportCity] = useState(user?.city || "");
+  const [reportCity, setReportCity] = useState("");
   const [date, setDate] = useState(getTodayDate());
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [showCityPicker, setShowCityPicker] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!reportCity) e.city = "City is required";
+    if (!reportCity.trim()) e.city = "City is required";
     if (!date.trim()) e.date = "Date is required";
     if (!note.trim()) e.note = "Note/Description is required";
     setErrors(e);
@@ -60,69 +53,106 @@ export default function DistributorDashboard() {
     try {
       const reportRef = push(ref(db, `reports/${user?.phone}`));
       await set(reportRef, {
-        city: reportCity,
+        city: reportCity.trim(),
         date: date.trim(),
         note: note.trim(),
         distributorName: user?.name,
-        shopName: user?.shopName,
         distributorPhone: user?.phone,
         submittedAt: Date.now(),
       });
       setSubmitted(true);
       setNote("");
-    } catch (err) {
-      Alert.alert("Error", "Could not submit report. Check your connection.");
+      setReportCity("");
+    } catch (err: any) {
+      Alert.alert("Error", err?.message || "Could not submit report. Check your connection.");
     } finally {
       setLoading(false);
     }
   };
 
+  const doLogout = async () => {
+    try {
+      await logout();
+      router.replace("/");
+    } catch {
+      router.replace("/");
+    }
+  };
+
   const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Logout", style: "destructive", onPress: async () => { await logout(); router.replace("/"); } },
-    ]);
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Logout", style: "destructive", onPress: doLogout },
+      ]
+    );
   };
 
   return (
-    <LinearGradient colors={Colors.gradient as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+    <LinearGradient
+      colors={Colors.gradient as any}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
         <ScrollView
-          contentContainerStyle={[styles.scroll, { paddingTop: topInset + 16, paddingBottom: bottomInset + 20 }]}
+          contentContainerStyle={[
+            styles.scroll,
+            { paddingTop: topInset + 16, paddingBottom: bottomInset + 20 },
+          ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Top Bar */}
           <View style={styles.topBar}>
-            <View>
-              <Text style={styles.greeting}>Hello, {user?.name?.split(" ")[0]}</Text>
-              <Text style={styles.subGreeting}>{user?.shopName} • {user?.city}</Text>
+            <View style={styles.topBarLeft}>
+              <Text style={styles.greeting}>
+                Hello, {user?.name?.split(" ")[0] || "Distributor"}
+              </Text>
+              <Text style={styles.subGreeting}>
+                {user?.phone}
+              </Text>
             </View>
             <View style={styles.topBarRight}>
               <Pressable
                 onPress={() => router.push("/distributor/history")}
                 style={styles.iconBtn}
+                hitSlop={8}
               >
                 <Ionicons name="time-outline" size={22} color={Colors.white} />
               </Pressable>
-              <Pressable onPress={handleLogout} style={styles.iconBtn}>
-                <Ionicons name="log-out-outline" size={22} color={Colors.white} />
+              <Pressable
+                onPress={handleLogout}
+                style={[styles.iconBtn, styles.logoutBtn]}
+                hitSlop={8}
+              >
+                <Ionicons name="log-out-outline" size={22} color={Colors.error} />
               </Pressable>
             </View>
           </View>
 
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <Ionicons name="person-outline" size={20} color={Colors.accent} />
-              <Text style={styles.statLabel}>Phone</Text>
-              <Text style={styles.statValue}>{user?.phone}</Text>
+          {/* Info Card */}
+          <View style={styles.infoCard}>
+            <View style={styles.infoItem}>
+              <Ionicons name="person-outline" size={16} color={Colors.accent} />
+              <Text style={styles.infoLabel}>Name</Text>
+              <Text style={styles.infoValue}>{user?.name}</Text>
             </View>
-            <View style={styles.statCard}>
-              <Ionicons name="location-outline" size={20} color={Colors.accent} />
-              <Text style={styles.statLabel}>City</Text>
-              <Text style={styles.statValue}>{user?.city}</Text>
+            <View style={styles.infoDivider} />
+            <View style={styles.infoItem}>
+              <Ionicons name="call-outline" size={16} color={Colors.accent} />
+              <Text style={styles.infoLabel}>Phone</Text>
+              <Text style={styles.infoValue}>{user?.phone}</Text>
             </View>
           </View>
 
+          {/* Success Banner */}
           {submitted && (
             <View style={styles.successBanner}>
               <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
@@ -130,46 +160,22 @@ export default function DistributorDashboard() {
             </View>
           )}
 
+          {/* Report Form */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Ionicons name="document-text-outline" size={20} color={Colors.accent} />
-              <Text style={styles.cardTitle}>Daily Report</Text>
+              <Text style={styles.cardTitle}>Submit Daily Report</Text>
             </View>
 
-            <View style={styles.inputWrapper}>
-              <Text style={styles.inputLabel}>City</Text>
-              <Pressable
-                style={[styles.citySelector, errors.city ? styles.cityError : null]}
-                onPress={() => setShowCityPicker(!showCityPicker)}
-              >
-                <Ionicons name="location-outline" size={18} color={Colors.whiteAlpha60} />
-                <Text style={[styles.citySelectorText, !reportCity && styles.cityPlaceholder]}>
-                  {reportCity || "Select city"}
-                </Text>
-                <Ionicons
-                  name={showCityPicker ? "chevron-up" : "chevron-down"}
-                  size={18}
-                  color={Colors.whiteAlpha60}
-                />
-              </Pressable>
-              {errors.city ? <Text style={styles.errorText}>{errors.city}</Text> : null}
-              {showCityPicker && (
-                <View style={styles.cityDropdown}>
-                  {CITIES.map((city) => (
-                    <Pressable
-                      key={city}
-                      style={[styles.cityItem, reportCity === city && styles.cityItemSelected]}
-                      onPress={() => { setReportCity(city); setShowCityPicker(false); }}
-                    >
-                      <Text style={[styles.cityItemText, reportCity === city && styles.cityItemTextSelected]}>
-                        {city}
-                      </Text>
-                      {reportCity === city && <Ionicons name="checkmark" size={16} color={Colors.accent} />}
-                    </Pressable>
-                  ))}
-                </View>
-              )}
-            </View>
+            <StyledInput
+              label="City"
+              placeholder="Type your city name"
+              value={reportCity}
+              onChangeText={setReportCity}
+              icon="location-outline"
+              error={errors.city}
+              autoCapitalize="words"
+            />
 
             <StyledInput
               label="Date"
@@ -189,18 +195,37 @@ export default function DistributorDashboard() {
               multiline
               numberOfLines={5}
               error={errors.note}
-              style={{ minHeight: 100, textAlignVertical: "top" } as any}
+              style={{ minHeight: 110, textAlignVertical: "top" } as any}
             />
 
-            <StyledButton
-              title="Submit Report"
+            <Pressable
               onPress={handleSubmit}
-              loading={loading}
-            />
+              disabled={loading}
+              style={({ pressed }) => [
+                styles.submitBtn,
+                pressed && styles.submitPressed,
+                loading && styles.submitDisabled,
+              ]}
+            >
+              <View style={styles.submitInner}>
+                {loading ? (
+                  <>
+                    <Ionicons name="cloud-upload-outline" size={18} color={Colors.white} />
+                    <Text style={styles.submitText}>Submitting...</Text>
+                  </>
+                ) : (
+                  <>
+                    <Ionicons name="cloud-upload-outline" size={18} color={Colors.white} />
+                    <Text style={styles.submitText}>Submit Report</Text>
+                  </>
+                )}
+              </View>
+            </Pressable>
           </View>
 
+          {/* History Button */}
           <Pressable
-            style={styles.historyBtn}
+            style={({ pressed }) => [styles.historyBtn, pressed && { opacity: 0.8 }]}
             onPress={() => router.push("/distributor/history")}
           >
             <Ionicons name="time-outline" size={20} color={Colors.accent} />
@@ -225,17 +250,10 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  topBarRight: { flexDirection: "row", gap: 8 },
-  iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.whiteAlpha15,
     alignItems: "center",
-    justifyContent: "center",
   },
+  topBarLeft: { flex: 1 },
+  topBarRight: { flexDirection: "row", gap: 8 },
   greeting: {
     fontSize: 20,
     fontFamily: "Poppins_700Bold",
@@ -247,29 +265,52 @@ const styles = StyleSheet.create({
     color: Colors.whiteAlpha60,
     marginTop: 2,
   },
-  statsRow: {
-    flexDirection: "row",
-    gap: 12,
+  iconBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: Colors.whiteAlpha15,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.whiteAlpha30,
   },
-  statCard: {
-    flex: 1,
+  logoutBtn: {
+    backgroundColor: "rgba(255,82,82,0.12)",
+    borderColor: "rgba(255,82,82,0.3)",
+  },
+  infoCard: {
     backgroundColor: Colors.cardBg,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: Colors.whiteAlpha15,
     padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 0,
+  },
+  infoItem: {
+    flex: 1,
+    alignItems: "center",
     gap: 4,
   },
-  statLabel: {
-    fontSize: 11,
+  infoDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: Colors.whiteAlpha15,
+    marginHorizontal: 8,
+  },
+  infoLabel: {
+    fontSize: 10,
     fontFamily: "Poppins_400Regular",
     color: Colors.whiteAlpha60,
-    marginTop: 4,
+    marginTop: 2,
   },
-  statValue: {
+  infoValue: {
     fontSize: 13,
     fontFamily: "Poppins_600SemiBold",
     color: Colors.white,
+    textAlign: "center",
   },
   successBanner: {
     flexDirection: "row",
@@ -277,7 +318,7 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: "rgba(0,230,118,0.15)",
     borderRadius: 12,
-    padding: 12,
+    padding: 13,
     borderWidth: 1,
     borderColor: "rgba(0,230,118,0.3)",
   },
@@ -298,55 +339,34 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   cardTitle: {
     fontSize: 16,
     fontFamily: "Poppins_700Bold",
     color: Colors.white,
   },
-  inputWrapper: { marginBottom: 14 },
-  inputLabel: {
-    fontSize: 13,
-    color: Colors.whiteAlpha80,
-    fontFamily: "Poppins_600SemiBold",
-    marginLeft: 2,
-    marginBottom: 6,
+  submitBtn: {
+    backgroundColor: Colors.accent,
+    borderRadius: 13,
+    paddingVertical: 14,
+    marginTop: 6,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  citySelector: {
+  submitInner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.inputBg,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.whiteAlpha30,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    gap: 10,
+    gap: 8,
   },
-  cityError: { borderColor: Colors.error },
-  citySelectorText: { flex: 1, fontSize: 14, fontFamily: "Poppins_400Regular", color: Colors.white },
-  cityPlaceholder: { color: Colors.whiteAlpha60 },
-  cityDropdown: {
-    backgroundColor: "#0D2550",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.whiteAlpha30,
-    marginTop: 4,
-    overflow: "hidden",
+  submitText: {
+    fontSize: 15,
+    fontFamily: "Poppins_700Bold",
+    color: Colors.white,
+    letterSpacing: 0.3,
   },
-  cityItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 11,
-    paddingHorizontal: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.whiteAlpha10,
-  },
-  cityItemSelected: { backgroundColor: "rgba(0,180,216,0.15)" },
-  cityItemText: { flex: 1, fontSize: 14, fontFamily: "Poppins_400Regular", color: Colors.whiteAlpha80 },
-  cityItemTextSelected: { color: Colors.accent, fontFamily: "Poppins_600SemiBold" },
-  errorText: { fontSize: 11, color: Colors.error, fontFamily: "Poppins_400Regular", marginLeft: 2, marginTop: 4 },
+  submitPressed: { opacity: 0.82, transform: [{ scale: 0.98 }] },
+  submitDisabled: { opacity: 0.6 },
   historyBtn: {
     flexDirection: "row",
     alignItems: "center",

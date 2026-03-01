@@ -87,18 +87,24 @@ export default function AdminDashboard() {
     );
   };
 
+  const doLogout = async () => {
+    try {
+      await logout();
+      router.replace("/");
+    } catch {
+      router.replace("/");
+    }
+  };
+
   const handleLogout = () => {
-    Alert.alert("Logout", "Logout from admin panel?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: async () => {
-          await logout();
-          router.replace("/");
-        },
-      },
-    ]);
+    Alert.alert(
+      "Logout",
+      "Logout from admin panel?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Logout", style: "destructive", onPress: doLogout },
+      ]
+    );
   };
 
   return (
@@ -113,7 +119,7 @@ export default function AdminDashboard() {
             <Text style={styles.subtitle}>MKM Distributor Hub</Text>
           </View>
           <Pressable onPress={handleLogout} style={styles.logoutBtn}>
-            <Ionicons name="log-out-outline" size={22} color={Colors.white} />
+            <Ionicons name="log-out-outline" size={22} color={Colors.error} />
           </Pressable>
         </View>
 
@@ -229,10 +235,12 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontFamily: "Poppins_700Bold", color: Colors.white },
   subtitle: { fontSize: 12, fontFamily: "Poppins_400Regular", color: Colors.whiteAlpha60 },
   logoutBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.whiteAlpha15,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(255,82,82,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(255,82,82,0.3)",
     alignItems: "center",
     justifyContent: "center",
   },
