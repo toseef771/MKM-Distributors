@@ -20,21 +20,11 @@ import Animated, {
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { Footer } from "@/components/Footer";
-import { useAuth } from "@/context/AuthContext";
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
-  const { user } = useAuth();
-
-  useEffect(() => {
-    if (user?.role === "distributor") {
-      router.replace("/distributor/dashboard");
-    } else if (user?.role === "admin") {
-      router.replace("/admin/dashboard");
-    }
-  }, [user]);
 
   const scale1 = useSharedValue(0.85);
   const scale2 = useSharedValue(0.85);

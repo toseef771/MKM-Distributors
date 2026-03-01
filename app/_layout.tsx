@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { router, Stack, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -7,7 +7,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
-import { AuthProvider } from "@/context/AuthContext";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 import {
   useFonts,
   Poppins_400Regular,
@@ -17,18 +17,52 @@ import {
 
 SplashScreen.preventAutoHideAsync();
 
+const PROTECTED_SEGMENTS = ["distributor", "admin"];
+
+function NavigationController() {
+  const { user, isLoading } = useAuth();
+  const segments = useSegments();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const firstSegment = segments[0] as string | undefined;
+    const inProtected = PROTECTED_SEGMENTS.includes(firstSegment ?? "");
+
+    if (!user && inProtected) {
+      router.replace("/");
+      return;
+    }
+
+    if (user?.role === "distributor" && firstSegment === undefined) {
+      router.replace("/distributor/dashboard");
+      return;
+    }
+
+    if (user?.role === "admin" && firstSegment === undefined) {
+      router.replace("/admin/dashboard");
+      return;
+    }
+  }, [user, isLoading, segments]);
+
+  return null;
+}
+
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="distributor/login" />
-      <Stack.Screen name="distributor/signup" />
-      <Stack.Screen name="distributor/dashboard" />
-      <Stack.Screen name="distributor/history" />
-      <Stack.Screen name="admin/login" />
-      <Stack.Screen name="admin/dashboard" />
-      <Stack.Screen name="admin/distributor/[id]" />
-    </Stack>
+    <>
+      <NavigationController />
+      <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="distributor/login" />
+        <Stack.Screen name="distributor/signup" />
+        <Stack.Screen name="distributor/dashboard" />
+        <Stack.Screen name="distributor/history" />
+        <Stack.Screen name="admin/login" />
+        <Stack.Screen name="admin/dashboard" />
+        <Stack.Screen name="admin/distributor/[id]" />
+      </Stack>
+    </>
   );
 }
 
