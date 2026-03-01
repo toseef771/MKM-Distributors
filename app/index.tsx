@@ -36,12 +36,12 @@ export default function WelcomeScreen() {
     }
   }, [user]);
 
-  const scale1 = useSharedValue(0.8);
-  const scale2 = useSharedValue(0.8);
+  const scale1 = useSharedValue(0.85);
+  const scale2 = useSharedValue(0.85);
 
   useEffect(() => {
-    scale1.value = withDelay(300, withSpring(1, { damping: 15 }));
-    scale2.value = withDelay(500, withSpring(1, { damping: 15 }));
+    scale1.value = withDelay(200, withSpring(1, { damping: 14 }));
+    scale2.value = withDelay(400, withSpring(1, { damping: 14 }));
   }, []);
 
   const card1Style = useAnimatedStyle(() => ({ transform: [{ scale: scale1.value }] }));
@@ -55,72 +55,65 @@ export default function WelcomeScreen() {
       style={styles.container}
     >
       <View style={[styles.inner, { paddingTop: topInset + 24, paddingBottom: bottomInset + 16 }]}>
+
         <Animated.View entering={FadeIn.delay(100)} style={styles.header}>
           <View style={styles.logoCircle}>
-            <Ionicons name="medical" size={36} color={Colors.accent} />
+            <Ionicons name="medical" size={38} color={Colors.accent} />
           </View>
           <Text style={styles.appName}>MKM Distributor</Text>
           <Text style={styles.tagline}>Medicine Distribution Management</Text>
         </Animated.View>
 
-        <Animated.View entering={FadeIn.delay(300)} style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>Select Your Panel</Text>
-          <View style={styles.dividerLine} />
+        <Animated.View entering={FadeIn.delay(250)} style={styles.chooseTxt}>
+          <Text style={styles.chooseLabel}>Choose Your Panel</Text>
         </Animated.View>
 
         <View style={styles.cardsContainer}>
+          {/* DISTRIBUTOR PANEL BUTTON */}
           <Animated.View style={[styles.cardWrap, card1Style]}>
             <Pressable
-              style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+              style={({ pressed }) => [styles.card, styles.cardDistributor, pressed && styles.cardPressed]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 router.push("/distributor/login");
               }}
             >
-              <LinearGradient
-                colors={["rgba(0,180,216,0.3)", "rgba(0,180,216,0.1)"]}
-                style={styles.cardGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.cardIconWrap}>
-                  <Ionicons name="person" size={32} color={Colors.accent} />
+              <View style={styles.cardLeft}>
+                <View style={styles.iconCircle}>
+                  <Ionicons name="person" size={28} color={Colors.accent} />
                 </View>
-                <Text style={styles.cardTitle}>Distributor</Text>
-                <Text style={styles.cardSubtitle}>Submit daily reports & view history</Text>
-                <View style={styles.cardArrow}>
-                  <Ionicons name="arrow-forward" size={18} color={Colors.accent} />
+                <View style={styles.cardTexts}>
+                  <Text style={styles.panelTitle}>Distributor Panel</Text>
+                  <Text style={styles.panelSub}>Submit & view daily reports</Text>
                 </View>
-              </LinearGradient>
+              </View>
+              <View style={styles.arrowCircle}>
+                <Ionicons name="arrow-forward" size={20} color={Colors.accent} />
+              </View>
             </Pressable>
           </Animated.View>
 
+          {/* ADMIN PANEL BUTTON */}
           <Animated.View style={[styles.cardWrap, card2Style]}>
             <Pressable
-              style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+              style={({ pressed }) => [styles.card, styles.cardAdmin, pressed && styles.cardPressed]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 router.push("/admin/login");
               }}
             >
-              <LinearGradient
-                colors={["rgba(255,255,255,0.2)", "rgba(255,255,255,0.05)"]}
-                style={styles.cardGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={[styles.cardIconWrap, styles.adminIconWrap]}>
-                  <Ionicons name="shield-checkmark" size={32} color={Colors.white} />
+              <View style={styles.cardLeft}>
+                <View style={[styles.iconCircle, styles.adminIconCircle]}>
+                  <Ionicons name="shield-checkmark" size={28} color={Colors.white} />
                 </View>
-                <Text style={[styles.cardTitle, styles.adminTitle]}>Admin</Text>
-                <Text style={[styles.cardSubtitle, styles.adminSubtitle]}>
-                  Manage distributors & reports
-                </Text>
-                <View style={styles.cardArrow}>
-                  <Ionicons name="arrow-forward" size={18} color={Colors.whiteAlpha80} />
+                <View style={styles.cardTexts}>
+                  <Text style={[styles.panelTitle, styles.adminPanelTitle]}>Admin Panel</Text>
+                  <Text style={[styles.panelSub, styles.adminPanelSub]}>Manage distributors & data</Text>
                 </View>
-              </LinearGradient>
+              </View>
+              <View style={[styles.arrowCircle, styles.adminArrowCircle]}>
+                <Ionicons name="arrow-forward" size={20} color={Colors.white} />
+              </View>
             </Pressable>
           </Animated.View>
         </View>
@@ -135,28 +128,29 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   inner: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 22,
   },
   header: {
     alignItems: "center",
-    marginBottom: 36,
+    marginBottom: 32,
   },
   logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
     backgroundColor: Colors.whiteAlpha15,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.whiteAlpha30,
+    borderWidth: 1.5,
+    borderColor: Colors.accent,
     marginBottom: 16,
   },
   appName: {
-    fontSize: 28,
+    fontSize: 26,
     fontFamily: "Poppins_700Bold",
     color: Colors.white,
-    marginBottom: 6,
+    marginBottom: 4,
+    textAlign: "center",
   },
   tagline: {
     fontSize: 13,
@@ -164,69 +158,91 @@ const styles = StyleSheet.create({
     color: Colors.whiteAlpha60,
     textAlign: "center",
   },
-  divider: {
-    flexDirection: "row",
+  chooseTxt: {
+    marginBottom: 18,
     alignItems: "center",
-    gap: 12,
-    marginBottom: 24,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.whiteAlpha30,
-  },
-  dividerText: {
+  chooseLabel: {
     fontSize: 12,
     fontFamily: "Poppins_600SemiBold",
     color: Colors.whiteAlpha60,
-    letterSpacing: 1,
+    letterSpacing: 2,
     textTransform: "uppercase",
   },
   cardsContainer: {
-    gap: 16,
     flex: 1,
+    gap: 16,
   },
   cardWrap: { flex: 1 },
   card: {
     flex: 1,
     borderRadius: 20,
-    overflow: "hidden",
-    borderWidth: 1,
+    padding: 22,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1.5,
+  },
+  cardDistributor: {
+    backgroundColor: "rgba(0,180,216,0.18)",
+    borderColor: Colors.accent,
+  },
+  cardAdmin: {
+    backgroundColor: Colors.whiteAlpha15,
     borderColor: Colors.whiteAlpha30,
   },
-  cardPressed: { opacity: 0.85 },
-  cardGradient: {
+  cardPressed: { opacity: 0.82, transform: [{ scale: 0.98 }] },
+  cardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
     flex: 1,
-    padding: 24,
-    gap: 6,
   },
-  cardIconWrap: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  iconCircle: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     backgroundColor: "rgba(0,180,216,0.2)",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    borderWidth: 1.5,
+    borderColor: Colors.accent,
   },
-  adminIconWrap: {
+  adminIconCircle: {
     backgroundColor: Colors.whiteAlpha15,
+    borderColor: Colors.whiteAlpha30,
   },
-  cardTitle: {
-    fontSize: 22,
+  cardTexts: { flex: 1 },
+  panelTitle: {
+    fontSize: 20,
     fontFamily: "Poppins_700Bold",
     color: Colors.accent,
+    marginBottom: 4,
   },
-  adminTitle: { color: Colors.white },
-  cardSubtitle: {
-    fontSize: 13,
+  adminPanelTitle: {
+    color: Colors.white,
+  },
+  panelSub: {
+    fontSize: 12,
     fontFamily: "Poppins_400Regular",
-    color: "rgba(0,180,216,0.8)",
-    lineHeight: 20,
+    color: "rgba(0,180,216,0.75)",
+    lineHeight: 18,
   },
-  adminSubtitle: { color: Colors.whiteAlpha60 },
-  cardArrow: {
-    marginTop: "auto",
-    alignSelf: "flex-end",
+  adminPanelSub: {
+    color: Colors.whiteAlpha60,
+  },
+  arrowCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,180,216,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.accent,
+  },
+  adminArrowCircle: {
+    backgroundColor: Colors.whiteAlpha10,
+    borderColor: Colors.whiteAlpha30,
   },
 });

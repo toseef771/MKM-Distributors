@@ -64,8 +64,9 @@ export default function DistributorLogin() {
         city: data.city,
       });
       router.replace("/distributor/dashboard");
-    } catch (err) {
-      Alert.alert("Error", "Something went wrong. Please try again.");
+    } catch (err: any) {
+      const msg = err?.message || "Could not connect to database. Please check your internet connection.";
+      Alert.alert("Connection Error", msg);
     } finally {
       setLoading(false);
     }
@@ -79,7 +80,7 @@ export default function DistributorLogin() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Pressable onPress={() => router.replace("/")} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={Colors.white} />
           </Pressable>
 
@@ -120,7 +121,7 @@ export default function DistributorLogin() {
 
             <View style={styles.signupRow}>
               <Text style={styles.signupText}>Don't have an account? </Text>
-              <Pressable onPress={() => router.push("/distributor/signup")}>
+              <Pressable onPress={() => router.replace("/distributor/signup")}>
                 <Text style={styles.signupLink}>Register Now</Text>
               </Pressable>
             </View>
