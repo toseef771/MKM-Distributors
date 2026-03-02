@@ -89,6 +89,7 @@ export default function AdminDashboard() {
 
   const doLogout = async () => {
     await logout();
+    router.replace("/");
   };
 
   const handleLogout = () => {

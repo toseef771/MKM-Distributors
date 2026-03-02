@@ -72,6 +72,7 @@ export default function DistributorDashboard() {
 
   const doLogout = async () => {
     await logout();
+    router.replace("/");
   };
 
   const handleLogout = () => {
