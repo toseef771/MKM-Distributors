@@ -71,55 +71,28 @@ export default function AdminDistributorDetail() {
     return () => unsub();
   }, [id]);
 
-  const handleDeleteMonthlyData = () => {
-    Alert.alert(
-      "Delete Monthly Reports",
-      `Clear all reports for ${getCurrentMonthLabel()} for ${name}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const toDelete = reports.map((r) => r.id);
-              const { update } = await import("firebase/database");
-              const updates: Record<string, null> = {};
-              toDelete.forEach((rid) => {
-                updates[`reports/${id}/${rid}`] = null;
-              });
-              await update(ref(db), updates);
-              Alert.alert("Success", "Monthly reports cleared.");
-            } catch {
-              Alert.alert("Error", "Could not delete reports.");
-            }
-          },
-        },
-      ]
-    );
+  const handleDeleteMonthlyData = async () => {
+    try {
+      const toDelete = reports.map((r) => r.id);
+      const { update } = await import("firebase/database");
+      const updates: Record<string, null> = {};
+      toDelete.forEach((rid) => {
+        updates[`reports/${id}/${rid}`] = null;
+      });
+      await update(ref(db), updates);
+    } catch {
+      Alert.alert("Error", "Could not delete reports.");
+    }
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      "Delete Account",
-      `Permanently delete ${name}'s account and ALL their data?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete Permanently",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await remove(ref(db, `distributors/${id}`));
-              await remove(ref(db, `reports/${id}`));
-              router.back();
-            } catch {
-              Alert.alert("Error", "Could not delete account.");
-            }
-          },
-        },
-      ]
-    );
+  const handleDeleteAccount = async () => {
+    try {
+      await remove(ref(db, `distributors/${id}`));
+      await remove(ref(db, `reports/${id}`));
+      router.back();
+    } catch {
+      Alert.alert("Error", "Could not delete account.");
+    }
   };
 
   return (
