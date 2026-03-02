@@ -87,20 +87,9 @@ export default function AdminDashboard() {
     );
   };
 
-  const doLogout = async () => {
+  const handleLogout = async () => {
     await logout();
     router.replace("/");
-  };
-
-  const handleLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Logout from admin panel?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Logout", style: "destructive", onPress: doLogout },
-      ]
-    );
   };
 
   return (

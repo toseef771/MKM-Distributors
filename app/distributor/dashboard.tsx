@@ -70,20 +70,9 @@ export default function DistributorDashboard() {
     }
   };
 
-  const doLogout = async () => {
+  const handleLogout = async () => {
     await logout();
     router.replace("/");
-  };
-
-  const handleLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Logout", style: "destructive", onPress: doLogout },
-      ]
-    );
   };
 
   return (
