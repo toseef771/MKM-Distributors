@@ -25,17 +25,15 @@ export default function DistributorLogin() {
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
-  const { loginDistributor }: any = useAuth();
+  const { loginDistributor } = useAuth();
 
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState({});
 
-  // --- WEB-SAFE ALERT FIX ---
-  const universalAlert = (title: any, message: any) => {
+  const universalAlert = (title, message) => {
     if (Platform.OS === "web") {
-      // @ts-ignore
       alert(title + "\n\n" + message);
     } else {
       Alert.alert(title, message);
@@ -43,7 +41,7 @@ export default function DistributorLogin() {
   };
 
   const validate = () => {
-    const e: any = {};
+    const e = {};
     if (!phone.trim()) e.phone = "Phone number is required";
     if (!password.trim()) e.password = "Password is required";
     setErrors(e);
@@ -73,24 +71,22 @@ export default function DistributorLogin() {
         shopName: data.shopName,
         city: data.city,
       });
-      router.replace("/distributor/dashboard" as any);
-    } catch (err: any) {
-      const msg = err?.message || "Could not connect to database.";
-      universalAlert("Connection Error", msg);
+      router.replace("/distributor/dashboard");
+    } catch (err) {
+      universalAlert("Connection Error", err?.message || "Could not connect to database.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <LinearGradient colors={Colors.gradient as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
+    <LinearGradient colors={Colors.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={[styles.scroll, { paddingTop: topInset + 20, paddingBottom: bottomInset + 20 }]}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
         >
-          <Pressable onPress={() => router.replace("/" as any)} style={styles.backBtn}>
+          <Pressable onPress={() => router.replace("/")} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={Colors.white} />
           </Pressable>
 
@@ -99,13 +95,11 @@ export default function DistributorLogin() {
               <Ionicons name="person" size={32} color={Colors.accent} />
             </View>
             <Text style={styles.title}>Distributor Login</Text>
-            <Text style={styles.subtitle}>Sign in to your account</Text>
           </View>
 
           <View style={styles.form}>
             <StyledInput
               label="Phone Number"
-              placeholder="03XX-XXXXXXX"
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
@@ -114,29 +108,14 @@ export default function DistributorLogin() {
             />
             <StyledInput
               label="Password"
-              placeholder="Enter your password"
               value={password}
               onChangeText={setPassword}
               icon="lock-closed-outline"
               isPassword
               error={errors.password}
             />
-
-            <StyledButton
-              title="Sign In"
-              onPress={handleLogin}
-              loading={loading}
-              style={styles.loginBtn}
-            />
-
-            <View style={styles.signupRow}>
-              <Text style={styles.signupText}>Don't have an account? </Text>
-              <Pressable onPress={() => router.replace("/distributor/signup" as any)}>
-                <Text style={styles.signupLink}>Register Now</Text>
-              </Pressable>
-            </View>
+            <StyledButton title="Sign In" onPress={handleLogin} loading={loading} />
           </View>
-
           <Footer />
         </ScrollView>
       </KeyboardAvoidingView>
@@ -151,10 +130,5 @@ const styles = StyleSheet.create({
   header: { alignItems: "center", marginBottom: 32, gap: 8 },
   iconWrap: { width: 72, height: 72, borderRadius: 36, backgroundColor: "rgba(0,180,216,0.2)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: Colors.accent, marginBottom: 8 },
   title: { fontSize: 24, color: Colors.white },
-  subtitle: { fontSize: 14, color: Colors.whiteAlpha60 },
-  form: { gap: 4 },
-  loginBtn: { marginTop: 8, marginBottom: 16 },
-  signupRow: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
-  signupText: { fontSize: 13, color: Colors.whiteAlpha60 },
-  signupLink: { fontSize: 13, color: Colors.accent },
+  form: { gap: 4 }
 });
