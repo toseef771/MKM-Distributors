@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Platform,
   TextInput,
+  BackHandler,
 } from "react-native";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -38,6 +39,19 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
+  // --- BACK BUTTON LOCK ---
+  useEffect(() => {
+    const backAction = () => {
+      Alert.alert("MKM Distributor", "Kya aap app se bahar nikalna chahte hain?", [
+        { text: "Nahi", onPress: () => null, style: "cancel" },
+        { text: "Haan", onPress: () => BackHandler.exitApp() }
+      ]);
+      return true;
+    };
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
+    return () => backHandler.remove();
+  }, []);
+
   useEffect(() => {
     const distRef = ref(db, "distributors");
     const unsub = onValue(distRef, (snap) => {
@@ -65,21 +79,23 @@ export default function AdminDashboard() {
       d.phone.includes(search)
   );
 
+  // --- DELETE ACCOUNT ALERT (FIXED) ---
   const handleDeleteAccount = (dist: Distributor) => {
     Alert.alert(
-      "Delete Account",
-      `Permanently delete ${dist.name}'s account and all their reports?`,
+      "⚠ Account Delete Karein?",
+      `Kya aap waqai ${dist.name} ka account aur sara data khatam karna chahte hain? Ye wapas nahi aayega.`,
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Delete",
+          text: "Haan, Delete Kar Dein",
           style: "destructive",
           onPress: async () => {
             try {
               await remove(ref(db, `distributors/${dist.phone}`));
               await remove(ref(db, `reports/${dist.phone}`));
+              Alert.alert("Success", "Account delete ho gaya.");
             } catch {
-              Alert.alert("Error", "Could not delete account.");
+              Alert.alert("Error", "Account delete nahi ho saka.");
             }
           },
         },
@@ -110,7 +126,7 @@ export default function AdminDashboard() {
 
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Ionicons name="people-outline" size={22} color={Colors.accent} />
+            <Ionicons name="people-outline" size={28} color={Colors.accent} />
             <Text style={styles.statNum}>{distributors.length}</Text>
             <Text style={styles.statLabel}>Distributors</Text>
           </View>
@@ -142,17 +158,7 @@ export default function AdminDashboard() {
         {loading ? (
           <View style={styles.centered}>
             <ActivityIndicator color={Colors.accent} size="large" />
-            <Text style={styles.loadingText}>Loading distributors...</Text>
-          </View>
-        ) : filtered.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="people-outline" size={48} color={Colors.whiteAlpha30} />
-            <Text style={styles.emptyTitle}>
-              {search ? "No Results Found" : "No Distributors Yet"}
-            </Text>
-            <Text style={styles.emptySubtitle}>
-              {search ? "Try a different search term." : "Registered distributors will appear here."}
-            </Text>
+            <Text style={styles.loadingText}>Loading...</Text>
           </View>
         ) : (
           <View style={styles.list}>
@@ -168,22 +174,14 @@ export default function AdminDashboard() {
                 }
               >
                 <View style={styles.distAvatar}>
-                  <Text style={styles.distAvatarText}>
-                    {dist.name.charAt(0).toUpperCase()}
-                  </Text>
+                  <Text style={styles.distAvatarText}>{dist.name.charAt(0)}</Text>
                 </View>
                 <View style={styles.distInfo}>
                   <Text style={styles.distName}>{dist.name}</Text>
                   <Text style={styles.distShop}>{dist.shopName}</Text>
                   <View style={styles.distMeta}>
-                    <View style={styles.metaChip}>
-                      <Ionicons name="location" size={10} color={Colors.accent} />
-                      <Text style={styles.metaChipText}>{dist.city}</Text>
-                    </View>
-                    <View style={styles.metaChip}>
-                      <Ionicons name="call" size={10} color={Colors.accent} />
-                      <Text style={styles.metaChipText}>{dist.phone}</Text>
-                    </View>
+                    <View style={styles.metaChip}><Text style={styles.metaChipText}>{dist.city}</Text></View>
+                    <View style={styles.metaChip}><Text style={styles.metaChipText}>{dist.phone}</Text></View>
                   </View>
                 </View>
                 <View style={styles.distActions}>
@@ -196,13 +194,11 @@ export default function AdminDashboard() {
                   >
                     <Ionicons name="trash-outline" size={16} color={Colors.error} />
                   </Pressable>
-                  <Ionicons name="chevron-forward" size={18} color={Colors.whiteAlpha30} />
                 </View>
               </Pressable>
             ))}
           </View>
         )}
-
         <Footer />
       </ScrollView>
     </LinearGradient>
@@ -212,103 +208,29 @@ export default function AdminDashboard() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: 20, gap: 16 },
-  topBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
+  topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   title: { fontSize: 22, fontFamily: "Poppins_700Bold", color: Colors.white },
   subtitle: { fontSize: 12, fontFamily: "Poppins_400Regular", color: Colors.whiteAlpha60 },
-  logoutBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "rgba(255,82,82,0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(255,82,82,0.3)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  logoutBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: "rgba(255,82,82,0.12)", alignItems: "center", justifyContent: "center" },
   statsRow: { flexDirection: "row", gap: 12 },
-  statCard: {
-    flex: 1,
-    backgroundColor: Colors.cardBg,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.whiteAlpha15,
-    padding: 16,
-    alignItems: "center",
-    gap: 4,
-  },
+  statCard: { flex: 1, backgroundColor: Colors.cardBg, borderRadius: 14, padding: 16, alignItems: "center" },
   statNum: { fontSize: 26, fontFamily: "Poppins_700Bold", color: Colors.white },
   statLabel: { fontSize: 11, fontFamily: "Poppins_400Regular", color: Colors.whiteAlpha60 },
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.inputBg,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.whiteAlpha30,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    gap: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: "Poppins_400Regular",
-    color: Colors.white,
-    padding: 0,
-  },
-  centered: { alignItems: "center", paddingVertical: 40, gap: 12 },
-  loadingText: { fontSize: 13, fontFamily: "Poppins_400Regular", color: Colors.whiteAlpha60 },
-  emptyState: { alignItems: "center", paddingVertical: 60, gap: 10 },
-  emptyTitle: { fontSize: 18, fontFamily: "Poppins_700Bold", color: Colors.whiteAlpha60 },
-  emptySubtitle: { fontSize: 13, fontFamily: "Poppins_400Regular", color: Colors.whiteAlpha30, textAlign: "center" },
+  searchBar: { flexDirection: "row", alignItems: "center", backgroundColor: Colors.inputBg, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, gap: 10 },
+  searchInput: { flex: 1, fontSize: 14, color: Colors.white },
+  centered: { alignItems: "center", paddingVertical: 40 },
+  loadingText: { fontSize: 13, color: Colors.whiteAlpha60 },
   list: { gap: 10 },
-  distCard: {
-    backgroundColor: Colors.cardBg,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.whiteAlpha15,
-    padding: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
+  distCard: { backgroundColor: Colors.cardBg, borderRadius: 16, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 },
   cardPressed: { opacity: 0.8 },
-  distAvatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: "rgba(0,180,216,0.25)",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.accent,
-  },
-  distAvatarText: { fontSize: 18, fontFamily: "Poppins_700Bold", color: Colors.accent },
-  distInfo: { flex: 1, gap: 2 },
-  distName: { fontSize: 15, fontFamily: "Poppins_600SemiBold", color: Colors.white },
-  distShop: { fontSize: 12, fontFamily: "Poppins_400Regular", color: Colors.whiteAlpha60 },
-  distMeta: { flexDirection: "row", gap: 6, marginTop: 4, flexWrap: "wrap" },
-  metaChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: "rgba(0,180,216,0.12)",
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  metaChipText: { fontSize: 10, fontFamily: "Poppins_400Regular", color: Colors.accent },
-  distActions: { flexDirection: "row", alignItems: "center", gap: 8 },
-  deleteBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "rgba(255,82,82,0.15)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  distAvatar: { width: 46, height: 46, borderRadius: 23, backgroundColor: "rgba(0,180,216,0.25)", alignItems: "center", justifyContent: "center" },
+  distAvatarText: { fontSize: 18, color: Colors.accent, fontWeight: "bold" },
+  distInfo: { flex: 1 },
+  distName: { fontSize: 15, color: Colors.white, fontWeight: "600" },
+  distShop: { fontSize: 12, color: Colors.whiteAlpha60 },
+  distMeta: { flexDirection: "row", gap: 6, marginTop: 4 },
+  metaChip: { backgroundColor: "rgba(0,180,216,0.12)", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  metaChipText: { fontSize: 10, color: Colors.accent },
+  distActions: { flexDirection: "row", alignItems: "center" },
+  deleteBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: "rgba(255,82,82,0.15)", alignItems: "center", justifyContent: "center" },
 });

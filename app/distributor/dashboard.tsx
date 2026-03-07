@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   Pressable,
+  BackHandler, // Add kiya
 } from "react-native";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -38,6 +39,27 @@ export default function DistributorDashboard() {
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // --- BACK BUTTON LOCK ---
+  useEffect(() => {
+    const backAction = () => {
+      Alert.alert("MKM Distributor", "Kya aap app band karna chahte hain?", [
+        { text: "Nahi", onPress: () => null, style: "cancel" },
+        { text: "Haan", onPress: () => BackHandler.exitApp() }
+      ]);
+      return true;
+    };
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
+    return () => backHandler.remove();
+  }, []);
+
+  // Success banner ko 4 second baad khud khatam karne ke liye
+  useEffect(() => {
+    if (submitted) {
+      const timer = setTimeout(() => setSubmitted(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [submitted]);
+
   const validate = () => {
     const e: Record<string, string> = {};
     if (!reportCity.trim()) e.city = "City is required";
@@ -63,16 +85,25 @@ export default function DistributorDashboard() {
       setSubmitted(true);
       setNote("");
       setReportCity("");
+      Alert.alert("Success", "Report submit ho gayi hai!");
     } catch (err: any) {
-      Alert.alert("Error", err?.message || "Could not submit report. Check your connection.");
+      Alert.alert("Error", err?.message || "Could not submit report.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogout = async () => {
-    await logout();
-    router.replace("/");
+    Alert.alert("Logout", "Kya aap logout karna chahte hain?", [
+      { text: "Cancel", style: "cancel" },
+      { 
+        text: "Logout", 
+        onPress: async () => {
+          await logout();
+          router.replace("/");
+        } 
+      }
+    ]);
   };
 
   return (
@@ -100,9 +131,7 @@ export default function DistributorDashboard() {
               <Text style={styles.greeting}>
                 Hello, {user?.name?.split(" ")[0] || "Distributor"}
               </Text>
-              <Text style={styles.subGreeting}>
-                {user?.phone}
-              </Text>
+              <Text style={styles.subGreeting}>{user?.phone}</Text>
             </View>
             <View style={styles.topBarRight}>
               <Pressable
@@ -193,17 +222,10 @@ export default function DistributorDashboard() {
               ]}
             >
               <View style={styles.submitInner}>
-                {loading ? (
-                  <>
-                    <Ionicons name="cloud-upload-outline" size={18} color={Colors.white} />
-                    <Text style={styles.submitText}>Submitting...</Text>
-                  </>
-                ) : (
-                  <>
-                    <Ionicons name="cloud-upload-outline" size={18} color={Colors.white} />
-                    <Text style={styles.submitText}>Submit Report</Text>
-                  </>
-                )}
+                <Ionicons name="cloud-upload-outline" size={18} color={Colors.white} />
+                <Text style={styles.submitText}>
+                  {loading ? "Submitting..." : "Submit Report"}
+                </Text>
               </View>
             </Pressable>
           </View>
@@ -227,145 +249,29 @@ export default function DistributorDashboard() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: 20,
-    gap: 14,
-  },
-  topBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
+  scroll: { flexGrow: 1, paddingHorizontal: 20, gap: 14 },
+  topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   topBarLeft: { flex: 1 },
   topBarRight: { flexDirection: "row", gap: 8 },
-  greeting: {
-    fontSize: 20,
-    fontFamily: "Poppins_700Bold",
-    color: Colors.white,
-  },
-  subGreeting: {
-    fontSize: 12,
-    fontFamily: "Poppins_400Regular",
-    color: Colors.whiteAlpha60,
-    marginTop: 2,
-  },
-  iconBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: Colors.whiteAlpha15,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.whiteAlpha30,
-  },
-  logoutBtn: {
-    backgroundColor: "rgba(255,82,82,0.12)",
-    borderColor: "rgba(255,82,82,0.3)",
-  },
-  infoCard: {
-    backgroundColor: Colors.cardBg,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.whiteAlpha15,
-    padding: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 0,
-  },
-  infoItem: {
-    flex: 1,
-    alignItems: "center",
-    gap: 4,
-  },
-  infoDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: Colors.whiteAlpha15,
-    marginHorizontal: 8,
-  },
-  infoLabel: {
-    fontSize: 10,
-    fontFamily: "Poppins_400Regular",
-    color: Colors.whiteAlpha60,
-    marginTop: 2,
-  },
-  infoValue: {
-    fontSize: 13,
-    fontFamily: "Poppins_600SemiBold",
-    color: Colors.white,
-    textAlign: "center",
-  },
-  successBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "rgba(0,230,118,0.15)",
-    borderRadius: 12,
-    padding: 13,
-    borderWidth: 1,
-    borderColor: "rgba(0,230,118,0.3)",
-  },
-  successText: {
-    fontSize: 13,
-    fontFamily: "Poppins_600SemiBold",
-    color: Colors.success,
-  },
-  card: {
-    backgroundColor: Colors.cardBg,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: Colors.whiteAlpha15,
-    padding: 18,
-    gap: 6,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontFamily: "Poppins_700Bold",
-    color: Colors.white,
-  },
-  submitBtn: {
-    backgroundColor: Colors.accent,
-    borderRadius: 13,
-    paddingVertical: 14,
-    marginTop: 6,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  submitInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  submitText: {
-    fontSize: 15,
-    fontFamily: "Poppins_700Bold",
-    color: Colors.white,
-    letterSpacing: 0.3,
-  },
+  greeting: { fontSize: 20, fontFamily: "Poppins_700Bold", color: Colors.white },
+  subGreeting: { fontSize: 12, fontFamily: "Poppins_400Regular", color: Colors.whiteAlpha60, marginTop: 2 },
+  iconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.whiteAlpha15, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: Colors.whiteAlpha30 },
+  logoutBtn: { backgroundColor: "rgba(255,82,82,0.12)", borderColor: "rgba(255,82,82,0.3)" },
+  infoCard: { backgroundColor: Colors.cardBg, borderRadius: 14, borderWidth: 1, borderColor: Colors.whiteAlpha15, padding: 14, flexDirection: "row", alignItems: "center" },
+  infoItem: { flex: 1, alignItems: "center", gap: 4 },
+  infoDivider: { width: 1, height: 40, backgroundColor: Colors.whiteAlpha15, marginHorizontal: 8 },
+  infoLabel: { fontSize: 10, fontFamily: "Poppins_400Regular", color: Colors.whiteAlpha60, marginTop: 2 },
+  infoValue: { fontSize: 13, fontFamily: "Poppins_600SemiBold", color: Colors.white, textAlign: "center" },
+  successBanner: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "rgba(0,230,118,0.15)", borderRadius: 12, padding: 13, borderWidth: 1, borderColor: "rgba(0,230,118,0.3)" },
+  successText: { fontSize: 13, fontFamily: "Poppins_600SemiBold", color: Colors.success },
+  card: { backgroundColor: Colors.cardBg, borderRadius: 18, borderWidth: 1, borderColor: Colors.whiteAlpha15, padding: 18, gap: 6 },
+  cardHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
+  cardTitle: { fontSize: 16, fontFamily: "Poppins_700Bold", color: Colors.white },
+  submitBtn: { backgroundColor: Colors.accent, borderRadius: 13, paddingVertical: 14, marginTop: 6, alignItems: "center", justifyContent: "center" },
+  submitInner: { flexDirection: "row", alignItems: "center", gap: 8 },
+  submitText: { fontSize: 15, fontFamily: "Poppins_700Bold", color: Colors.white, letterSpacing: 0.3 },
   submitPressed: { opacity: 0.82, transform: [{ scale: 0.98 }] },
   submitDisabled: { opacity: 0.6 },
-  historyBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: Colors.whiteAlpha10,
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.accent,
-  },
-  historyBtnText: {
-    fontSize: 14,
-    fontFamily: "Poppins_600SemiBold",
-    color: Colors.accent,
-  },
+  historyBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: Colors.whiteAlpha10, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: Colors.accent },
+  historyBtnText: { fontSize: 14, fontFamily: "Poppins_600SemiBold", color: Colors.accent },
 });

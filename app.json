@@ -27,13 +27,14 @@
       }
     },
     "web": {
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       [
         "expo-router",
         {
-          "origin": "https://replit.com/"
+          "origin": "https://mkm-distributor-hub.web.app"
         }
       ],
       "expo-font",
@@ -42,6 +43,14 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {
+        "origin": "https://mkm-distributor-hub.web.app"
+      },
+      "eas": {
+        "projectId": "cbce412e-78d4-4442-8c99-2e68531c64cd"
+      }
     }
   }
 }

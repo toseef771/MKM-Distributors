@@ -6,7 +6,8 @@ export function Footer() {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>
-        Designed and Developed by Toseef Bhatti | Instructions by Amir Shahzad
+        Designed and Developed by Toseef Bhatti | 
+           Instructions by Amir Shahzad
       </Text>
     </View>
   );

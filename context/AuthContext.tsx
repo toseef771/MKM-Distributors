@@ -25,15 +25,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Persistence Logic: App khulne par check karega ke koi purana user save hai ya nahi
   useEffect(() => {
-    AsyncStorage.getItem("mkm_user").then((val) => {
-      if (val) {
-        try {
+    const loadUser = async () => {
+      try {
+        const val = await AsyncStorage.getItem("mkm_user");
+        if (val) {
           setUser(JSON.parse(val));
-        } catch {}
+        }
+      } catch (e) {
+        console.error("Error loading session:", e);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    });
+    };
+    loadUser();
   }, []);
 
   const loginDistributor = async (data: AuthUser) => {

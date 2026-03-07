@@ -6,9 +6,10 @@ import {
   Pressable,
   Platform,
 } from "react-native";
-import { router } from "expo-router";
+import { router, Redirect } from "expo-router"; // Redirect yahan add kiya hai
+import { useAuth } from "@/context/AuthContext"; // useAuth import kiya
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useSharedValue,
@@ -22,7 +23,20 @@ import Colors from "@/constants/colors";
 import { Footer } from "@/components/Footer";
 
 export default function WelcomeScreen() {
+  const { user, isLoading } = useAuth(); // Auth context se data liya
   const insets = useSafeAreaInsets();
+
+  // --- PERSISTENT LOGIN REDIRECT LOGIC ---
+  // Jab tak load ho raha hai, blank screen dikhaye
+  if (isLoading) return null;
+
+  // Agar user pehle se login hai, toh seedha dashboard bhejein
+  if (user) {
+    if (user.role === "admin") return <Redirect href="/admin/dashboard" />;
+    if (user.role === "distributor") return <Redirect href="/distributor/dashboard" />;
+  }
+  // ---------------------------------------
+
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
 
@@ -48,7 +62,7 @@ export default function WelcomeScreen() {
 
         <Animated.View entering={FadeIn.delay(100)} style={styles.header}>
           <View style={styles.logoCircle}>
-            <Ionicons name="medical" size={38} color={Colors.accent} />
+            <MaterialCommunityIcons name="pill" size={42} color={Colors.accent} />
           </View>
           <Text style={styles.appName}>MKM Distributor</Text>
           <Text style={styles.tagline}>Medicine Distribution Management</Text>
