@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  Alert,
   ScrollView,
   Platform,
   KeyboardAvoidingView,
@@ -32,14 +31,6 @@ export default function DistributorLogin() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const universalAlert = (title, message) => {
-    if (Platform.OS === "web") {
-      alert(title + "\n\n" + message);
-    } else {
-      Alert.alert(title, message);
-    }
-  };
-
   const validate = () => {
     const e = {};
     if (!phone.trim()) e.phone = "Phone number is required";
@@ -51,19 +42,26 @@ export default function DistributorLogin() {
   const handleLogin = async () => {
     if (!validate()) return;
     setLoading(true);
+    setErrors({}); // Purane errors clear karein
+
     try {
       const snap = await get(ref(db, `distributors/${phone.trim()}`));
+      
       if (!snap.exists()) {
-        universalAlert("Error", "No account found with this phone number.");
+        // Alert ki bajaye input ke niche error dikhayen
+        setErrors({ phone: "No account found with this phone number." });
         setLoading(false);
         return;
       }
+
       const data = snap.val();
       if (data.password !== password) {
-        universalAlert("Error", "Incorrect password.");
+        // Password field ke niche error dikhayen
+        setErrors({ password: "Incorrect password." });
         setLoading(false);
         return;
       }
+
       await loginDistributor({
         role: "distributor",
         phone: phone.trim(),
@@ -72,8 +70,9 @@ export default function DistributorLogin() {
         city: data.city,
       });
       router.replace("/distributor/dashboard");
+      
     } catch (err) {
-      universalAlert("Connection Error", err?.message || "Could not connect to database.");
+      setErrors({ phone: "Connection Error: Please check internet." });
     } finally {
       setLoading(false);
     }
@@ -100,19 +99,21 @@ export default function DistributorLogin() {
           <View style={styles.form}>
             <StyledInput
               label="Phone Number"
+              placeholder="03XX-XXXXXXX"
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
               icon="call-outline"
-              error={errors.phone}
+              error={errors.phone} // Yahan error text dikhega
             />
             <StyledInput
               label="Password"
+              placeholder="Enter password"
               value={password}
               onChangeText={setPassword}
               icon="lock-closed-outline"
               isPassword
-              error={errors.password}
+              error={errors.password} // Yahan error text dikhega
             />
             <StyledButton title="Sign In" onPress={handleLogin} loading={loading} />
           </View>
@@ -129,6 +130,6 @@ const styles = StyleSheet.create({
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.whiteAlpha15, alignItems: "center", justifyContent: "center", marginBottom: 24 },
   header: { alignItems: "center", marginBottom: 32, gap: 8 },
   iconWrap: { width: 72, height: 72, borderRadius: 36, backgroundColor: "rgba(0,180,216,0.2)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: Colors.accent, marginBottom: 8 },
-  title: { fontSize: 24, color: Colors.white },
+  title: { fontSize: 24, color: Colors.white, fontFamily: "System" }, // Safe font
   form: { gap: 4 }
 });
