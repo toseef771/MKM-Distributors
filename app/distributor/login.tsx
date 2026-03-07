@@ -25,15 +25,25 @@ export default function DistributorLogin() {
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
-  const { loginDistributor } = useAuth();
+  const { loginDistributor }: any = useAuth();
 
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ phone?: string; password?: string }>({});
+  const [errors, setErrors] = useState<any>({});
+
+  // --- WEB-SAFE ALERT FIX ---
+  const universalAlert = (title: any, message: any) => {
+    if (Platform.OS === "web") {
+      // @ts-ignore
+      alert(title + "\n\n" + message);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
 
   const validate = () => {
-    const e: typeof errors = {};
+    const e: any = {};
     if (!phone.trim()) e.phone = "Phone number is required";
     if (!password.trim()) e.password = "Password is required";
     setErrors(e);
@@ -46,13 +56,13 @@ export default function DistributorLogin() {
     try {
       const snap = await get(ref(db, `distributors/${phone.trim()}`));
       if (!snap.exists()) {
-        Alert.alert("Error", "No account found with this phone number.");
+        universalAlert("Error", "No account found with this phone number.");
         setLoading(false);
         return;
       }
       const data = snap.val();
       if (data.password !== password) {
-        Alert.alert("Error", "Incorrect password.");
+        universalAlert("Error", "Incorrect password.");
         setLoading(false);
         return;
       }
@@ -63,10 +73,10 @@ export default function DistributorLogin() {
         shopName: data.shopName,
         city: data.city,
       });
-      router.replace("/distributor/dashboard");
+      router.replace("/distributor/dashboard" as any);
     } catch (err: any) {
-      const msg = err?.message || "Could not connect to database. Please check your internet connection.";
-      Alert.alert("Connection Error", msg);
+      const msg = err?.message || "Could not connect to database.";
+      universalAlert("Connection Error", msg);
     } finally {
       setLoading(false);
     }
@@ -80,7 +90,7 @@ export default function DistributorLogin() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Pressable onPress={() => router.replace("/")} style={styles.backBtn}>
+          <Pressable onPress={() => router.replace("/" as any)} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={Colors.white} />
           </Pressable>
 
@@ -121,7 +131,7 @@ export default function DistributorLogin() {
 
             <View style={styles.signupRow}>
               <Text style={styles.signupText}>Don't have an account? </Text>
-              <Pressable onPress={() => router.replace("/distributor/signup")}>
+              <Pressable onPress={() => router.replace("/distributor/signup" as any)}>
                 <Text style={styles.signupLink}>Register Now</Text>
               </Pressable>
             </View>
@@ -136,57 +146,15 @@ export default function DistributorLogin() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    gap: 8,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.whiteAlpha15,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 24,
-  },
+  scroll: { flexGrow: 1, paddingHorizontal: 24, gap: 8 },
+  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.whiteAlpha15, alignItems: "center", justifyContent: "center", marginBottom: 24 },
   header: { alignItems: "center", marginBottom: 32, gap: 8 },
-  iconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "rgba(0,180,216,0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.accent,
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontFamily: "Poppins_700Bold",
-    color: Colors.white,
-  },
-  subtitle: {
-    fontSize: 14,
-    fontFamily: "Poppins_400Regular",
-    color: Colors.whiteAlpha60,
-  },
+  iconWrap: { width: 72, height: 72, borderRadius: 36, backgroundColor: "rgba(0,180,216,0.2)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: Colors.accent, marginBottom: 8 },
+  title: { fontSize: 24, color: Colors.white },
+  subtitle: { fontSize: 14, color: Colors.whiteAlpha60 },
   form: { gap: 4 },
   loginBtn: { marginTop: 8, marginBottom: 16 },
-  signupRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  signupText: {
-    fontSize: 13,
-    fontFamily: "Poppins_400Regular",
-    color: Colors.whiteAlpha60,
-  },
-  signupLink: {
-    fontSize: 13,
-    fontFamily: "Poppins_600SemiBold",
-    color: Colors.accent,
-  },
+  signupRow: { flexDirection: "row", justifyContent: "center", alignItems: "center" },
+  signupText: { fontSize: 13, color: Colors.whiteAlpha60 },
+  signupLink: { fontSize: 13, color: Colors.accent },
 });
