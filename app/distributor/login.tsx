@@ -29,10 +29,10 @@ export default function DistributorLogin() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<{ phone?: string; password?: string; general?: string }>({});
 
   const validate = () => {
-    const e = {};
+    const e: typeof errors = {};
     if (!phone.trim()) e.phone = "Phone number is required";
     if (!password.trim()) e.password = "Password is required";
     setErrors(e);
@@ -40,23 +40,22 @@ export default function DistributorLogin() {
   };
 
   const handleLogin = async () => {
+    setErrors({});
     if (!validate()) return;
     setLoading(true);
-    setErrors({}); // Purane errors clear karein
-
+    
     try {
-      const snap = await get(ref(db, `distributors/${phone.trim()}`));
+      const phoneKey = phone.trim();
+      const snap = await get(ref(db, `distributors/${phoneKey}`));
       
       if (!snap.exists()) {
-        // Alert ki bajaye input ke niche error dikhayen
         setErrors({ phone: "No account found with this phone number." });
         setLoading(false);
         return;
       }
-
+      
       const data = snap.val();
       if (data.password !== password) {
-        // Password field ke niche error dikhayen
         setErrors({ password: "Incorrect password." });
         setLoading(false);
         return;
@@ -64,26 +63,29 @@ export default function DistributorLogin() {
 
       await loginDistributor({
         role: "distributor",
-        phone: phone.trim(),
+        phone: phoneKey,
         name: data.name,
         shopName: data.shopName,
         city: data.city,
       });
-      router.replace("/distributor/dashboard");
       
-    } catch (err) {
-      setErrors({ phone: "Connection Error: Please check internet." });
+      router.replace("/distributor/dashboard");
+    } catch (err: any) {
+      setErrors({ 
+        general: "Connection error. Please check your internet." 
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <LinearGradient colors={Colors.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
+    <LinearGradient colors={Colors.gradient as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={[styles.scroll, { paddingTop: topInset + 20, paddingBottom: bottomInset + 20 }]}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           <Pressable onPress={() => router.replace("/")} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={Colors.white} />
@@ -94,9 +96,17 @@ export default function DistributorLogin() {
               <Ionicons name="person" size={32} color={Colors.accent} />
             </View>
             <Text style={styles.title}>Distributor Login</Text>
+            <Text style={styles.subtitle}>Sign in to your account</Text>
           </View>
 
           <View style={styles.form}>
+            {errors.general && (
+              <View style={styles.errorBanner}>
+                <Ionicons name="alert-circle" size={18} color={Colors.error} />
+                <Text style={styles.errorBannerText}>{errors.general}</Text>
+              </View>
+            )}
+
             <StyledInput
               label="Phone Number"
               placeholder="03XX-XXXXXXX"
@@ -104,19 +114,34 @@ export default function DistributorLogin() {
               onChangeText={setPhone}
               keyboardType="phone-pad"
               icon="call-outline"
-              error={errors.phone} // Yahan error text dikhega
+              error={errors.phone}
             />
+            
             <StyledInput
               label="Password"
-              placeholder="Enter password"
+              placeholder="Enter your password"
               value={password}
               onChangeText={setPassword}
               icon="lock-closed-outline"
               isPassword
-              error={errors.password} // Yahan error text dikhega
+              error={errors.password}
             />
-            <StyledButton title="Sign In" onPress={handleLogin} loading={loading} />
+
+            <StyledButton
+              title="Sign In"
+              onPress={handleLogin}
+              loading={loading}
+              style={styles.loginBtn}
+            />
+
+            <View style={styles.signupRow}>
+              <Text style={styles.signupText}>Don't have an account? </Text>
+              <Pressable onPress={() => router.replace("/distributor/signup")}>
+                <Text style={styles.signupLink}>Register Now</Text>
+              </Pressable>
+            </View>
           </View>
+
           <Footer />
         </ScrollView>
       </KeyboardAvoidingView>
@@ -126,10 +151,74 @@ export default function DistributorLogin() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scroll: { flexGrow: 1, paddingHorizontal: 24, gap: 8 },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.whiteAlpha15, alignItems: "center", justifyContent: "center", marginBottom: 24 },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.whiteAlpha15,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 24,
+  },
   header: { alignItems: "center", marginBottom: 32, gap: 8 },
-  iconWrap: { width: 72, height: 72, borderRadius: 36, backgroundColor: "rgba(0,180,216,0.2)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: Colors.accent, marginBottom: 8 },
-  title: { fontSize: 24, color: Colors.white, fontFamily: "System" }, // Safe font
-  form: { gap: 4 }
+  iconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "rgba(0,180,216,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.accent,
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 24,
+    fontFamily: "Poppins_700Bold",
+    color: Colors.white,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontFamily: "Poppins_400Regular",
+    color: Colors.whiteAlpha60,
+  },
+  form: { gap: 4 },
+  errorBanner: {
+    backgroundColor: "rgba(255,82,82,0.1)",
+    padding: 12,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,82,82,0.3)",
+  },
+  errorBannerText: {
+    color: Colors.error,
+    fontSize: 12,
+    fontFamily: "Poppins_600SemiBold",
+    flex: 1,
+  },
+  loginBtn: { marginTop: 8, marginBottom: 16 },
+  signupRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  signupText: {
+    fontSize: 13,
+    fontFamily: "Poppins_400Regular",
+    color: Colors.whiteAlpha60,
+  },
+  signupLink: {
+    fontSize: 13,
+    fontFamily: "Poppins_600SemiBold",
+    color: Colors.accent,
+  },
 });
