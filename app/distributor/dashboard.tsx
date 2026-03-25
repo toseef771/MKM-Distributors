@@ -40,7 +40,7 @@ export default function DistributorDashboard() {
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Back Button Logic
+  // --- Back Button App Exit Logic ---
   useEffect(() => {
     const backAction = () => {
       Alert.alert("MKM Distributor", "Kya aap app band karna chahte hain?", [
@@ -93,7 +93,7 @@ export default function DistributorDashboard() {
     }
   };
 
-  // --- FIXED LOGOUT FUNCTION ---
+  // --- Updated Direct Logout Function ---
   const handleLogout = async () => {
     Alert.alert(
       "Logout", 
@@ -105,13 +105,12 @@ export default function DistributorDashboard() {
           style: "destructive",
           onPress: async () => {
             try {
-              await logout(); // Context se logout call kiya
-              // Chota sa delay taake state clear ho jaye aur router navigation safe ho
+              await logout();
               setTimeout(() => {
                 router.replace("/"); 
-              }, 100);
+              }, 150); // Increased delay for stability
             } catch (err) {
-              Alert.alert("Error", "Logout nahi ho saka.");
+              Alert.alert("Error", "Logout failed.");
             }
           } 
         }
@@ -139,7 +138,8 @@ export default function DistributorDashboard() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.topBar}>
+          {/* Top Bar Fix for better touch detection */}
+          <View style={[styles.topBar, { zIndex: 10 }]}>
             <View style={styles.topBarLeft}>
               <Text style={styles.greeting}>
                 Hello, {user?.name?.split(" ")[0] || "Distributor"}
@@ -150,16 +150,16 @@ export default function DistributorDashboard() {
               <Pressable
                 onPress={() => router.push("/distributor/history")}
                 style={styles.iconBtn}
-                hitSlop={8}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Ionicons name="time-outline" size={22} color={Colors.white} />
               </Pressable>
               
-              {/* Logout Button */}
+              {/* Higher Priority Logout Button */}
               <Pressable
                 onPress={handleLogout}
                 style={[styles.iconBtn, styles.logoutBtn]}
-                hitSlop={8}
+                hitSlop={{ top: 20, bottom: 20, left: 15, right: 20 }}
               >
                 <Ionicons name="log-out-outline" size={22} color={Colors.error} />
               </Pressable>
@@ -261,13 +261,13 @@ export default function DistributorDashboard() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { flexGrow: 1, paddingHorizontal: 20, gap: 14 },
-  topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", position: 'relative' },
   topBarLeft: { flex: 1 },
   topBarRight: { flexDirection: "row", gap: 8 },
   greeting: { fontSize: 20, fontFamily: "Poppins_700Bold", color: Colors.white },
   subGreeting: { fontSize: 12, fontFamily: "Poppins_400Regular", color: Colors.whiteAlpha60, marginTop: 2 },
-  iconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.whiteAlpha15, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: Colors.whiteAlpha30 },
-  logoutBtn: { backgroundColor: "rgba(255,82,82,0.12)", borderColor: "rgba(255,82,82,0.3)" },
+  iconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)" },
+  logoutBtn: { backgroundColor: "rgba(255,82,82,0.15)", borderColor: "rgba(255,82,82,0.4)" },
   infoCard: { backgroundColor: Colors.cardBg, borderRadius: 14, borderWidth: 1, borderColor: Colors.whiteAlpha15, padding: 14, flexDirection: "row", alignItems: "center" },
   infoItem: { flex: 1, alignItems: "center", gap: 4 },
   infoDivider: { width: 1, height: 40, backgroundColor: Colors.whiteAlpha15, marginHorizontal: 8 },
