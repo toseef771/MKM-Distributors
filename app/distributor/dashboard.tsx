@@ -8,7 +8,8 @@ import {
   Platform,
   KeyboardAvoidingView,
   Pressable,
-  BackHandler, // Add kiya
+  BackHandler,
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -39,7 +40,7 @@ export default function DistributorDashboard() {
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // --- BACK BUTTON LOCK ---
+  // Back Button Logic
   useEffect(() => {
     const backAction = () => {
       Alert.alert("MKM Distributor", "Kya aap app band karna chahte hain?", [
@@ -52,7 +53,6 @@ export default function DistributorDashboard() {
     return () => backHandler.remove();
   }, []);
 
-  // Success banner ko 4 second baad khud khatam karne ke liye
   useEffect(() => {
     if (submitted) {
       const timer = setTimeout(() => setSubmitted(false), 4000);
@@ -93,17 +93,31 @@ export default function DistributorDashboard() {
     }
   };
 
+  // --- FIXED LOGOUT FUNCTION ---
   const handleLogout = async () => {
-    Alert.alert("Logout", "Kya aap logout karna chahte hain?", [
-      { text: "Cancel", style: "cancel" },
-      { 
-        text: "Logout", 
-        onPress: async () => {
-          await logout();
-          router.replace("/");
-        } 
-      }
-    ]);
+    Alert.alert(
+      "Logout", 
+      "Kya aap logout karna chahte hain?", 
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Logout", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await logout(); // Context se logout call kiya
+              // Chota sa delay taake state clear ho jaye aur router navigation safe ho
+              setTimeout(() => {
+                router.replace("/"); 
+              }, 100);
+            } catch (err) {
+              Alert.alert("Error", "Logout nahi ho saka.");
+            }
+          } 
+        }
+      ],
+      { cancelable: true }
+    );
   };
 
   return (
@@ -125,7 +139,6 @@ export default function DistributorDashboard() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Top Bar */}
           <View style={styles.topBar}>
             <View style={styles.topBarLeft}>
               <Text style={styles.greeting}>
@@ -141,6 +154,8 @@ export default function DistributorDashboard() {
               >
                 <Ionicons name="time-outline" size={22} color={Colors.white} />
               </Pressable>
+              
+              {/* Logout Button */}
               <Pressable
                 onPress={handleLogout}
                 style={[styles.iconBtn, styles.logoutBtn]}
@@ -151,7 +166,6 @@ export default function DistributorDashboard() {
             </View>
           </View>
 
-          {/* Info Card */}
           <View style={styles.infoCard}>
             <View style={styles.infoItem}>
               <Ionicons name="person-outline" size={16} color={Colors.accent} />
@@ -166,7 +180,6 @@ export default function DistributorDashboard() {
             </View>
           </View>
 
-          {/* Success Banner */}
           {submitted && (
             <View style={styles.successBanner}>
               <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
@@ -174,7 +187,6 @@ export default function DistributorDashboard() {
             </View>
           )}
 
-          {/* Report Form */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Ionicons name="document-text-outline" size={20} color={Colors.accent} />
@@ -230,7 +242,6 @@ export default function DistributorDashboard() {
             </Pressable>
           </View>
 
-          {/* History Button */}
           <Pressable
             style={({ pressed }) => [styles.historyBtn, pressed && { opacity: 0.8 }]}
             onPress={() => router.push("/distributor/history")}
