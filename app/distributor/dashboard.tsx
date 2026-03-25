@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Pressable,
   BackHandler,
-  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -40,11 +39,10 @@ export default function DistributorDashboard() {
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // --- Back Button App Exit Logic ---
   useEffect(() => {
     const backAction = () => {
       Alert.alert("MKM Distributor", "Kya aap app band karna chahte hain?", [
-        { text: "Nahi", onPress: () => null, style: "cancel" },
+        { text: "Nahi", style: "cancel" },
         { text: "Haan", onPress: () => BackHandler.exitApp() }
       ]);
       return true;
@@ -53,24 +51,34 @@ export default function DistributorDashboard() {
     return () => backHandler.remove();
   }, []);
 
-  useEffect(() => {
-    if (submitted) {
-      const timer = setTimeout(() => setSubmitted(false), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [submitted]);
-
-  const validate = () => {
-    const e: Record<string, string> = {};
-    if (!reportCity.trim()) e.city = "City is required";
-    if (!date.trim()) e.date = "Date is required";
-    if (!note.trim()) e.note = "Note/Description is required";
-    setErrors(e);
-    return Object.keys(e).length === 0;
+  const handleLogout = async () => {
+    Alert.alert("Logout", "Kya aap logout karna chahte hain?", [
+      { text: "Cancel", style: "cancel" },
+      { 
+        text: "Logout", 
+        onPress: async () => {
+          try {
+            await logout();
+            router.replace("/");
+          } catch (e) {
+            console.log(e);
+          }
+        } 
+      }
+    ]);
   };
 
   const handleSubmit = async () => {
-    if (!validate()) return;
+    const e: Record<string, string> = {};
+    if (!reportCity.trim()) e.city = "City is required";
+    if (!date.trim()) e.date = "Date is required";
+    if (!note.trim()) e.note = "Note is required";
+    
+    if (Object.keys(e).length > 0) {
+      setErrors(e);
+      return;
+    }
+
     setLoading(true);
     try {
       const reportRef = push(ref(db, `reports/${user?.phone}`));
@@ -85,107 +93,68 @@ export default function DistributorDashboard() {
       setSubmitted(true);
       setNote("");
       setReportCity("");
-      Alert.alert("Success", "Report submit ho gayi hai!");
+      Alert.alert("Success", "Report submit ho gayi!");
     } catch (err: any) {
-      Alert.alert("Error", err?.message || "Could not submit report.");
+      Alert.alert("Error", "Submit nahi ho saka.");
     } finally {
       setLoading(false);
     }
   };
 
-  // --- Updated Direct Logout Function ---
-  const handleLogout = async () => {
-    Alert.alert(
-      "Logout", 
-      "Kya aap logout karna chahte hain?", 
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Logout", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await logout();
-              setTimeout(() => {
-                router.replace("/"); 
-              }, 150); // Increased delay for stability
-            } catch (err) {
-              Alert.alert("Error", "Logout failed.");
-            }
-          } 
-        }
-      ],
-      { cancelable: true }
-    );
-  };
-
   return (
-    <LinearGradient
-      colors={Colors.gradient as any}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.container}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={{ flex: 1 }}
+    <LinearGradient colors={Colors.gradient as any} style={styles.container}>
+      {/* Logout Button: Absolute Positioned for Max Priority */}
+      <Pressable
+        onPress={handleLogout}
+        style={({ pressed }) => [
+          {
+            position: 'absolute',
+            right: 20,
+            top: topInset + 10,
+            zIndex: 9999, // Sab se upar
+            width: 45,
+            height: 45,
+            borderRadius: 22.5,
+            backgroundColor: pressed ? 'rgba(255,82,82,0.4)' : 'rgba(255,82,82,0.2)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 1,
+            borderColor: 'rgba(255,82,82,0.5)',
+          }
+        ]}
       >
+        <Ionicons name="log-out-outline" size={24} color="#ff5252" />
+      </Pressable>
+
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={[
             styles.scroll,
             { paddingTop: topInset + 16, paddingBottom: bottomInset + 20 },
           ]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="always"
         >
-          {/* Top Bar Fix for better touch detection */}
-          <View style={[styles.topBar, { zIndex: 10 }]}>
-            <View style={styles.topBarLeft}>
-              <Text style={styles.greeting}>
-                Hello, {user?.name?.split(" ")[0] || "Distributor"}
-              </Text>
+          {/* Header Content */}
+          <View style={styles.topBar}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.greeting}>Hello, {user?.name?.split(" ")[0] || "User"}</Text>
               <Text style={styles.subGreeting}>{user?.phone}</Text>
             </View>
-            <View style={styles.topBarRight}>
-              <Pressable
-                onPress={() => router.push("/distributor/history")}
-                style={styles.iconBtn}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Ionicons name="time-outline" size={22} color={Colors.white} />
-              </Pressable>
-              
-              {/* Higher Priority Logout Button */}
-              <Pressable
-                onPress={handleLogout}
-                style={[styles.iconBtn, styles.logoutBtn]}
-                hitSlop={{ top: 20, bottom: 20, left: 15, right: 20 }}
-              >
-                <Ionicons name="log-out-outline" size={22} color={Colors.error} />
-              </Pressable>
-            </View>
+            {/* Space for absolute button */}
+            <View style={{ width: 50 }} />
           </View>
 
           <View style={styles.infoCard}>
             <View style={styles.infoItem}>
               <Ionicons name="person-outline" size={16} color={Colors.accent} />
-              <Text style={styles.infoLabel}>Name</Text>
               <Text style={styles.infoValue}>{user?.name}</Text>
             </View>
             <View style={styles.infoDivider} />
             <View style={styles.infoItem}>
               <Ionicons name="call-outline" size={16} color={Colors.accent} />
-              <Text style={styles.infoLabel}>Phone</Text>
               <Text style={styles.infoValue}>{user?.phone}</Text>
             </View>
           </View>
-
-          {submitted && (
-            <View style={styles.successBanner}>
-              <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-              <Text style={styles.successText}>Report submitted successfully!</Text>
-            </View>
-          )}
 
           <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -193,63 +162,14 @@ export default function DistributorDashboard() {
               <Text style={styles.cardTitle}>Submit Daily Report</Text>
             </View>
 
-            <StyledInput
-              label="City"
-              placeholder="Type your city name"
-              value={reportCity}
-              onChangeText={setReportCity}
-              icon="location-outline"
-              error={errors.city}
-              autoCapitalize="words"
-            />
+            <StyledInput label="City" value={reportCity} onChangeText={setReportCity} icon="location-outline" error={errors.city} />
+            <StyledInput label="Date" value={date} onChangeText={setDate} icon="calendar-outline" error={errors.date} />
+            <StyledInput label="Note" value={note} onChangeText={setNote} icon="create-outline" multiline error={errors.note} />
 
-            <StyledInput
-              label="Date"
-              placeholder="YYYY-MM-DD"
-              value={date}
-              onChangeText={setDate}
-              icon="calendar-outline"
-              error={errors.date}
-            />
-
-            <StyledInput
-              label="Note / Description"
-              placeholder="Enter today's report details..."
-              value={note}
-              onChangeText={setNote}
-              icon="create-outline"
-              multiline
-              numberOfLines={5}
-              error={errors.note}
-              style={{ minHeight: 110, textAlignVertical: "top" } as any}
-            />
-
-            <Pressable
-              onPress={handleSubmit}
-              disabled={loading}
-              style={({ pressed }) => [
-                styles.submitBtn,
-                pressed && styles.submitPressed,
-                loading && styles.submitDisabled,
-              ]}
-            >
-              <View style={styles.submitInner}>
-                <Ionicons name="cloud-upload-outline" size={18} color={Colors.white} />
-                <Text style={styles.submitText}>
-                  {loading ? "Submitting..." : "Submit Report"}
-                </Text>
-              </View>
+            <Pressable onPress={handleSubmit} disabled={loading} style={[styles.submitBtn, loading && { opacity: 0.6 }]}>
+              <Text style={styles.submitText}>{loading ? "Submitting..." : "Submit Report"}</Text>
             </Pressable>
           </View>
-
-          <Pressable
-            style={({ pressed }) => [styles.historyBtn, pressed && { opacity: 0.8 }]}
-            onPress={() => router.push("/distributor/history")}
-          >
-            <Ionicons name="time-outline" size={20} color={Colors.accent} />
-            <Text style={styles.historyBtnText}>View My History</Text>
-            <Ionicons name="arrow-forward" size={16} color={Colors.accent} />
-          </Pressable>
 
           <Footer />
         </ScrollView>
@@ -260,29 +180,17 @@ export default function DistributorDashboard() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scroll: { flexGrow: 1, paddingHorizontal: 20, gap: 14 },
-  topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", position: 'relative' },
-  topBarLeft: { flex: 1 },
-  topBarRight: { flexDirection: "row", gap: 8 },
-  greeting: { fontSize: 20, fontFamily: "Poppins_700Bold", color: Colors.white },
-  subGreeting: { fontSize: 12, fontFamily: "Poppins_400Regular", color: Colors.whiteAlpha60, marginTop: 2 },
-  iconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)" },
-  logoutBtn: { backgroundColor: "rgba(255,82,82,0.15)", borderColor: "rgba(255,82,82,0.4)" },
-  infoCard: { backgroundColor: Colors.cardBg, borderRadius: 14, borderWidth: 1, borderColor: Colors.whiteAlpha15, padding: 14, flexDirection: "row", alignItems: "center" },
-  infoItem: { flex: 1, alignItems: "center", gap: 4 },
-  infoDivider: { width: 1, height: 40, backgroundColor: Colors.whiteAlpha15, marginHorizontal: 8 },
-  infoLabel: { fontSize: 10, fontFamily: "Poppins_400Regular", color: Colors.whiteAlpha60, marginTop: 2 },
-  infoValue: { fontSize: 13, fontFamily: "Poppins_600SemiBold", color: Colors.white, textAlign: "center" },
-  successBanner: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "rgba(0,230,118,0.15)", borderRadius: 12, padding: 13, borderWidth: 1, borderColor: "rgba(0,230,118,0.3)" },
-  successText: { fontSize: 13, fontFamily: "Poppins_600SemiBold", color: Colors.success },
-  card: { backgroundColor: Colors.cardBg, borderRadius: 18, borderWidth: 1, borderColor: Colors.whiteAlpha15, padding: 18, gap: 6 },
-  cardHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
-  cardTitle: { fontSize: 16, fontFamily: "Poppins_700Bold", color: Colors.white },
-  submitBtn: { backgroundColor: Colors.accent, borderRadius: 13, paddingVertical: 14, marginTop: 6, alignItems: "center", justifyContent: "center" },
-  submitInner: { flexDirection: "row", alignItems: "center", gap: 8 },
-  submitText: { fontSize: 15, fontFamily: "Poppins_700Bold", color: Colors.white, letterSpacing: 0.3 },
-  submitPressed: { opacity: 0.82, transform: [{ scale: 0.98 }] },
-  submitDisabled: { opacity: 0.6 },
-  historyBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: Colors.whiteAlpha10, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: Colors.accent },
-  historyBtnText: { fontSize: 14, fontFamily: "Poppins_600SemiBold", color: Colors.accent },
+  scroll: { flexGrow: 1, paddingHorizontal: 20, gap: 15 },
+  topBar: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
+  greeting: { fontSize: 22, color: Colors.white, fontWeight: 'bold' },
+  subGreeting: { fontSize: 13, color: 'rgba(255,255,255,0.6)' },
+  infoCard: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 15, padding: 15, flexDirection: 'row' },
+  infoItem: { flex: 1, alignItems: 'center' },
+  infoDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginHorizontal: 10 },
+  infoValue: { color: Colors.white, fontSize: 14 },
+  card: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 20, padding: 20, gap: 10 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  cardTitle: { color: Colors.white, fontSize: 18, fontWeight: 'bold' },
+  submitBtn: { backgroundColor: Colors.accent, padding: 15, borderRadius: 12, alignItems: 'center' },
+  submitText: { color: Colors.white, fontWeight: 'bold', fontSize: 16 },
 });
