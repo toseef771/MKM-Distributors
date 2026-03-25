@@ -39,13 +39,11 @@ export default function DistributorDashboard() {
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Back Button Logic (App Exit)
   useEffect(() => {
     const backAction = () => {
-      // Exit ke liye alert rehne diya hai taake ghalti se app band na ho jaye
-      Alert.alert("MKM Distributor", "Exit?", [
-        { text: "No", style: "cancel" },
-        { text: "Yes", onPress: () => BackHandler.exitApp() }
+      Alert.alert("MKM Distributor", "Kya aap app band karna chahte hain?", [
+        { text: "Nahi", style: "cancel" },
+        { text: "Haan", onPress: () => BackHandler.exitApp() }
       ]);
       return true;
     };
@@ -53,21 +51,20 @@ export default function DistributorDashboard() {
     return () => backHandler.remove();
   }, []);
 
-  // --- DIRECT LOGOUT (NO ALERT) ---
   const handleLogout = async () => {
     try {
       await logout();
       router.replace("/");
     } catch (err) {
-      console.log("Logout Error:", err);
+      console.log("Logout Error");
     }
   };
 
   const handleSubmit = async () => {
     const e: Record<string, string> = {};
-    if (!reportCity.trim()) e.city = "City required";
-    if (!date.trim()) e.date = "Date required";
-    if (!note.trim()) e.note = "Note required";
+    if (!reportCity.trim()) e.city = "City is required";
+    if (!date.trim()) e.date = "Date is required";
+    if (!note.trim()) e.note = "Note/Description is required";
     
     if (Object.keys(e).length > 0) {
       setErrors(e);
@@ -88,9 +85,9 @@ export default function DistributorDashboard() {
       setSubmitted(true);
       setNote("");
       setReportCity("");
-      Alert.alert("Success", "Report submit ho gayi!");
+      Alert.alert("Success", "Report submit ho gayi hai!");
     } catch (err: any) {
-      Alert.alert("Error", "Submit fail.");
+      Alert.alert("Error", "Submit nahi ho saka.");
     } finally {
       setLoading(false);
     }
@@ -105,38 +102,25 @@ export default function DistributorDashboard() {
             { paddingTop: topInset + 16, paddingBottom: bottomInset + 20 },
           ]}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          {/* Top Bar Fix */}
-          <View style={[styles.topBar, { zIndex: 100 }]}>
+          {/* --- TOP BAR --- */}
+          <View style={styles.topBar}>
             <View style={styles.topBarLeft}>
               <Text style={styles.greeting}>Hello, {user?.name?.split(" ")[0] || "User"}</Text>
               <Text style={styles.subGreeting}>{user?.phone}</Text>
             </View>
             <View style={styles.topBarRight}>
-              <Pressable
-                onPress={() => router.push("/distributor/history")}
-                style={styles.iconBtn}
-                hitSlop={10}
-              >
+              <Pressable onPress={() => router.push("/distributor/history")} style={styles.iconBtn} hitSlop={10}>
                 <Ionicons name="time-outline" size={22} color={Colors.white} />
               </Pressable>
-              
-              {/* Logout Button: No Alert, Just Direct Action */}
-              <Pressable
-                onPress={handleLogout}
-                style={({ pressed }) => [
-                  styles.iconBtn, 
-                  styles.logoutBtn,
-                  { opacity: pressed ? 0.5 : 1 }
-                ]}
-                hitSlop={15}
-              >
+              <Pressable onPress={handleLogout} style={[styles.iconBtn, styles.logoutBtn]} hitSlop={10}>
                 <Ionicons name="log-out-outline" size={22} color={Colors.error} />
               </Pressable>
             </View>
           </View>
 
-          {/* Info Section */}
+          {/* --- INFO CARD --- */}
           <View style={styles.infoCard}>
             <View style={styles.infoItem}>
               <Ionicons name="person-outline" size={16} color={Colors.accent} />
@@ -149,21 +133,31 @@ export default function DistributorDashboard() {
             </View>
           </View>
 
-          {/* Form Section */}
+          {/* --- FORM CARD --- */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Ionicons name="document-text-outline" size={20} color={Colors.accent} />
               <Text style={styles.cardTitle}>Submit Daily Report</Text>
             </View>
 
-            <StyledInput label="City" value={reportCity} onChangeText={setReportCity} error={errors.city} icon="location-outline" />
-            <StyledInput label="Date" value={date} onChangeText={setDate} error={errors.date} icon="calendar-outline" />
-            <StyledInput label="Note" value={note} onChangeText={setNote} error={errors.note} icon="create-outline" multiline />
+            <StyledInput label="City" value={reportCity} onChangeText={setReportCity} icon="location-outline" error={errors.city} />
+            <StyledInput label="Date" value={date} onChangeText={setDate} icon="calendar-outline" error={errors.date} />
+            <StyledInput label="Note" value={note} onChangeText={setNote} icon="create-outline" multiline error={errors.note} />
 
             <Pressable onPress={handleSubmit} disabled={loading} style={styles.submitBtn}>
               <Text style={styles.submitText}>{loading ? "Submitting..." : "Submit Report"}</Text>
             </Pressable>
           </View>
+
+          {/* --- HISTORY BUTTON (Wapis aa gaya!) --- */}
+          <Pressable
+            style={({ pressed }) => [styles.historyBtn, pressed && { opacity: 0.8 }]}
+            onPress={() => router.push("/distributor/history")}
+          >
+            <Ionicons name="time-outline" size={20} color={Colors.accent} />
+            <Text style={styles.historyBtnText}>View My History</Text>
+            <Ionicons name="arrow-forward" size={16} color={Colors.accent} />
+          </Pressable>
 
           <Footer />
         </ScrollView>
@@ -177,18 +171,20 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, paddingHorizontal: 20, gap: 14 },
   topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   topBarLeft: { flex: 1 },
-  topBarRight: { flexDirection: "row", gap: 10 },
+  topBarRight: { flexDirection: "row", gap: 8 },
   greeting: { fontSize: 20, fontWeight: 'bold', color: Colors.white },
   subGreeting: { fontSize: 12, color: 'rgba(255,255,255,0.6)' },
   iconBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
   logoutBtn: { backgroundColor: "rgba(255,82,82,0.12)", borderColor: "rgba(255,82,82,0.3)" },
-  infoCard: { backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 14, padding: 14, flexDirection: "row" },
+  infoCard: { backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 14, padding: 14, flexDirection: "row", alignItems: "center" },
   infoItem: { flex: 1, alignItems: "center" },
-  infoDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginHorizontal: 8 },
+  infoDivider: { width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.1)', marginHorizontal: 8 },
   infoValue: { fontSize: 13, color: Colors.white, fontWeight: '600' },
-  card: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 18, padding: 18, gap: 10 },
-  cardHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  card: { backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 18, padding: 18, gap: 8 },
+  cardHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 5 },
   cardTitle: { fontSize: 16, fontWeight: 'bold', color: Colors.white },
   submitBtn: { backgroundColor: Colors.accent, borderRadius: 12, padding: 15, alignItems: "center" },
-  submitText: { color: Colors.white, fontWeight: 'bold' },
+  submitText: { color: Colors.white, fontWeight: 'bold', fontSize: 15 },
+  historyBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 14, padding: 15, borderWidth: 1, borderColor: Colors.accent },
+  historyBtnText: { fontSize: 14, fontWeight: '600', color: Colors.accent },
 });
